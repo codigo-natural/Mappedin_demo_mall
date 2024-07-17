@@ -1,0 +1,15 @@
+.map_selector_container {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  z-index: 2;
+}
+
+.map_selector {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: #c1c1c1;
+  color: black;
+  font-size: 1rem;
+  cursor: pointer;
+}

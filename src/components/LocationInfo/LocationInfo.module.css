@@ -1,0 +1,22 @@
+.containen_location_info {
+  margin: 1.5em 0 1.5em 0;
+}
+
+.container_step_by_step {
+  display: flex;
+  flex-direction: column;
+}
+
+.steps_time {
+  padding: 1em 0 0 0;
+  border-top: 1px solid ;
+}
+
+.steps_time > p {
+  color: rgb(119, 119, 119);
+  letter-spacing: 0px;
+  font-weight: normal;
+  font-size: 14px;
+  line-height: 1.2em;
+}
+
