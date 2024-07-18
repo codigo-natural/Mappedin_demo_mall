@@ -14,7 +14,6 @@ import { useSelectedLocation } from "./hooks/useSelectedLocation";
 import { useVenue } from "./hooks/useVenue";
 import { MostPopular } from "./components/MostPopular";
 import { SearchBar } from "./components/SearchBar";
-import { CategorySection } from "./components/CategorySection";
 import { SearchSection } from "./components/SearchSection";
 import { MapSelector } from "./components/MapSelector";
 import { LocationInfo } from "./components/LocationInfo";
@@ -26,12 +25,6 @@ interface MapSelector {
   handleChange: (event: React.ChangeEvent<HTMLSelectElement>) => Promise<void>;
 }
 
-interface Category {
-  id?: string | number | null ;
-  name: string;
-  locations: MappedinLocation[];
-}
-
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [departure, setDeparture] = useState<MappedinPolygon | null>(null);
@@ -40,9 +33,6 @@ function App() {
   const [selectedMap, setSelectedMap] = useState("Planta Baja");
   const [steps, setSteps] = useState<string[]>([]);
   const [showCategorySection, setShowCategorySection] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
   const [showSearchSection, setShowSearchSection] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [totalWalkingTime, setTotalWalkingTime] = useState(0);
@@ -125,7 +115,7 @@ function App() {
         return `${step.instruction} (${distanceInMeters} meters)`;
       }
     );
-    console.log('new steps', newSteps)
+    console.log("new steps", newSteps);
 
     setSteps(newSteps);
     setTotalWalkingTime(
@@ -324,14 +314,6 @@ function App() {
                     venue?.venue.topLocations as MappedinLocation[] | undefined
                   }
                 />
-                {showCategorySection && (
-                  <CategorySection
-                    categories={venue.categories}
-                    selectedCategory={selectedCategory}
-                    setSelectedCategory={setSelectedCategory}
-                    mapView={mapView}
-                  />
-                )}
                 {showSearchSection && (
                   <SearchSection
                     searchResults={searchResults.filter(
@@ -366,7 +348,6 @@ function App() {
         <MapSelector
           selectedMap={selectedMap}
           handleMapChange={handleMapChange}
-          // maps={venue.maps}
         />
       </div>
     </>
