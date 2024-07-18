@@ -19,7 +19,6 @@ export const useVenue = (options: TGetVenueBundleOptions) => {
         if (!ignore) {
           setVenue(data);
         }
-        console.log("fetch data: ->", data);
       } catch (e) {
         // Handle error
         setVenue(undefined);

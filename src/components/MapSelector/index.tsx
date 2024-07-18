@@ -1,6 +1,12 @@
+import React from 'react';
 import styles from "./MapSelector.module.css";
 
-export const MapSelector = ({ selectedMap, handleMapChange, maps }) => {
+interface MapSelectorProps {
+  selectedMap: string;
+  handleMapChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+export const MapSelector: React.FC<MapSelectorProps> = ({ selectedMap, handleMapChange }) => {
   return (
     <div className={styles.map_selector_container}>
       <select

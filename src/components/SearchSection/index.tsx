@@ -1,9 +1,16 @@
 import React from "react";
-import { MappedinLocation } from "@mappedin/mappedin-js";
+import { MappedinLocation, MappedinPolygon, MapView } from "@mappedin/mappedin-js";
 
 interface SearchSectionProps {
   searchResults: MappedinLocation[];
-  setSelectedLocation: (location: MappedinLocation) => void;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  searchQuery: string;
+  setSelectedLocation: React.Dispatch<
+    React.SetStateAction<MappedinLocation | undefined>
+  >;
+  mapView: MapView | undefined;
+  departure: MappedinPolygon | null;
+  destination: MappedinPolygon | null;
 }
 
 export const SearchSection: React.FC<SearchSectionProps> = ({

@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
   E_SDK_EVENT,
-  Mappedin,
-  MappedinLocation,
+  CAMERA_EASING_MODE,
   MappedinPolygon,
-  TGetVenueOptions,
+  MappedinLocation,
+  STATE,
 } from "@mappedin/mappedin-js";
 import "@mappedin/mappedin-js/lib/mappedin.css";
 import "./App.css";
@@ -12,69 +12,71 @@ import { useMapView } from "./hooks/useMapView";
 import { useOfflineSearch } from "./hooks/useOfflineSearch";
 import { useSelectedLocation } from "./hooks/useSelectedLocation";
 import { useVenue } from "./hooks/useVenue";
-import { useMapClickHandler } from "./hooks/useMapClickHandler";
-// components
 import { MostPopular } from "./components/MostPopular";
 import { SearchBar } from "./components/SearchBar";
 import { CategorySection } from "./components/CategorySection";
 import { SearchSection } from "./components/SearchSection";
 import { MapSelector } from "./components/MapSelector";
 import { LocationInfo } from "./components/LocationInfo";
-// constants
 import { options, walkingSpeed } from "./constants";
-// utils
-import { calculateWalkingTime, resetAllThings, handleMapChange } from "./utils";
+import { calculateWalkingTime } from "./utils";
+
+interface MapSelector {
+  selectedMap: string[];
+  handleChange: (event: React.ChangeEvent<HTMLSelectElement>) => Promise<void>;
+}
+
+interface Category {
+  id?: string | number | null ;
+  name: string;
+  locations: MappedinLocation[];
+}
 
 function App() {
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [departure, setDeparture] = useState<MappedinPolygon | null>(null);
   const [destination, setDestination] = useState<MappedinPolygon | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [selectedMap, setSelectedMap] = useState("Planta Baja");
   const [steps, setSteps] = useState<string[]>([]);
   const [showCategorySection, setShowCategorySection] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [showSearchSection, setShowSearchSection] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [totalWalkingTime, setTotalWalkingTime] = useState(0);
 
-  useEffect(() => {
-    if (!departure || !destination) {
-      setSteps([]);
-      setTotalWalkingTime(0);
-      return;
-    }
-
-    const directions = departure.directionsTo(destination);
-
-    let totalDistance = 0;
-    const newSteps = directions.instructions.map((step) => {
-      const distanceInMeters = Math.round(step.distance);
-      totalDistance += distanceInMeters;
-
-      return (
-        <div>
-          <p>{step.instruction}</p>
-          <small>{distanceInMeters} meters</small>
-        </div>
-      );
-    });
-    setSteps(newSteps);
-    setTotalWalkingTime(calculateWalkingTime(totalDistance, walkingSpeed));
-  }, [departure, destination]);
-
   const venue = useVenue(options);
-  useEffect(() => {});
   const { elementRef, mapView } = useMapView(venue, {
     multiBufferRendering: true,
-    antialiasQuality: "high",
+    xRayPath: true,
+    loadOptions: {
+      outdoorGeometryLayers: [
+        "__TEXT__",
+        "__AUTO__BORDER__",
+        "Base",
+        "Void",
+        "Outdoor Obstruction",
+        "Water Feature",
+        "Parking Below",
+        "Landscape Below",
+        "Sidewalk Below",
+        "Details Below",
+        "Landscape",
+        "Sidewalk",
+        "Entrance Arrows",
+        "Parking Lot Standard",
+        "Parking Icon",
+        "OD Tree Base",
+        "OD Tree Top",
+      ],
+    },
     outdoorView: {
       enabled: true,
     },
     shadingAndOutlines: true,
   });
-
-  const topLocations = venue?.venue.topLocations;
 
   const { selectedLocation, setSelectedLocation } =
     useSelectedLocation(mapView);
@@ -87,27 +89,91 @@ function App() {
     [results]
   );
 
-  const resetAllThings = useCallback(() => {
+  useEffect(() => {
+    if (!mapView || !departure || !destination) {
+      setSteps([]);
+      setTotalWalkingTime(0);
+      return;
+    }
+
+    const directions = departure.directionsTo(destination);
+
+    mapView.Journey.draw(directions, {
+      pathOptions: {
+        color: "#fc0",
+      },
+    });
+
+    mapView.Camera.focusOn(
+      {
+        nodes: directions.path,
+        polygons: [departure, destination],
+      },
+      {
+        minZoom: 2000,
+        duration: 1000,
+        easing: CAMERA_EASING_MODE.EASE_IN_OUT,
+      }
+    );
+
+    let totalDistance = 0;
+    const newSteps = directions.instructions.map(
+      (step: { instruction: string; distance: number }) => {
+        const distanceInMeters = Math.round(step.distance);
+        totalDistance += distanceInMeters;
+
+        return `${step.instruction} (${distanceInMeters} meters)`;
+      }
+    );
+    console.log('new steps', newSteps)
+
+    setSteps(newSteps);
+    setTotalWalkingTime(
+      Number(calculateWalkingTime(totalDistance, walkingSpeed))
+    );
+  }, [mapView, departure, destination]);
+
+  useEffect(() => {
     if (!mapView) return;
 
-    setDeparture(null);
-    setDestination(null);
-    mapView.Journey.clear();
-    mapView.clearAllPolygonColors();
-    setSelectedLocation(null);
-  }, [mapView]);
+    const handleMapClick = ({ polygons }: { polygons: MappedinPolygon[] }) => {
+      if (polygons.length === 0) return;
 
-  const handleMapClick = useMapClickHandler(
-    mapView,
-    departure,
-    setDeparture,
-    destination,
-    setDestination,
-    resetAllThings
-  );
+      const clickedPolygon = polygons[0];
+
+      if (!departure) {
+        setDeparture(clickedPolygon);
+        mapView.setPolygonColor(clickedPolygon, "red");
+      } else if (!destination && clickedPolygon !== departure) {
+        setDestination(clickedPolygon);
+        mapView.setPolygonColor(clickedPolygon, "blue");
+      } else {
+        setDeparture(null);
+        setDestination(null);
+        mapView.Journey.clear();
+        mapView.clearAllPolygonColors();
+        setSelectedLocation(undefined);
+      }
+    };
+
+    mapView.on(E_SDK_EVENT.CLICK, handleMapClick);
+    mapView.addInteractivePolygonsForAllLocations();
+    mapView.FloatingLabels.labelAllLocations();
+
+    mapView.on(E_SDK_EVENT.CLICK, () => {
+      // TODO - Use STACKED_MAPS_STATE.ZOOMED_IN when availabe
+      if (mapView.state === STATE.STACKED) {
+        mapView.StackedMaps.showOverview();
+      }
+    });
+
+    return () => {
+      mapView.off(E_SDK_EVENT.CLICK, handleMapClick);
+    };
+  }, [mapView, departure, destination, setSelectedLocation]);
 
   const handleMapChange = useCallback(
-    async (event) => {
+    async (event: React.ChangeEvent<HTMLSelectElement>) => {
       const selectedOption = event.target.value;
       setSelectedMap(selectedOption);
 
@@ -123,25 +189,11 @@ function App() {
           console.error("Error al cambiar el mapa:", error);
         }
       } else {
-        console.warn(
-          `No se encontró un mapa con el nombre "${selectedOption}"`
-        );
+        console.warn(`No se encontró un mapa con el nombre ${selectedOption}`);
       }
     },
     [mapView, venue]
   );
-
-  useEffect(() => {
-    if (!mapView) return;
-
-    mapView.on(E_SDK_EVENT.CLICK, handleMapClick);
-    mapView.addInteractivePolygonsForAllLocations();
-    mapView.FloatingLabels.labelAllLocations();
-
-    return () => {
-      mapView.off(E_SDK_EVENT.CLICK, handleMapClick);
-    };
-  }, [mapView, handleMapClick]);
 
   if (!venue) {
     return <div>Loading...</div>;
@@ -151,14 +203,14 @@ function App() {
     setShowCategorySection(!showCategorySection);
     setShowSearchSection(false);
     setInputFocused(false);
-    setSelectedLocation(null);
+    setSelectedLocation(undefined);
   };
 
   const handleInputFocus = () => {
     setShowSearchSection(true);
     setShowCategorySection(false);
     setInputFocused(true);
-    setSelectedLocation(null);
+    setSelectedLocation(undefined);
   };
 
   const handleCancelClick = () => {
@@ -174,17 +226,11 @@ function App() {
     setInputFocused(false);
   };
 
-  console.log("venue structure:", venue);
-
   const maxLength = 100;
   const description = selectedLocation?.description || "";
   const shortDescription = showFullDescription
     ? description
     : description?.substring(0, maxLength);
-
-  const handleClickInput = (event) => {
-    alert("click in input");
-  };
 
   return (
     <>
@@ -192,7 +238,6 @@ function App() {
         style={{ height: "100%", width: "100%", position: "absolute" }}
         ref={elementRef}
       ></div>
-      {/* modal contenedor informacion */}
       <div
         role="main"
         style={{
@@ -260,9 +305,7 @@ function App() {
                       gap: "8px",
                     }}
                   >
-                    {/* Search bar */}
                     <SearchBar
-                      inputClick={handleClickInput}
                       searchQuery={searchQuery}
                       setSearchQuery={setSearchQuery}
                       inputFocused={inputFocused}
@@ -275,8 +318,12 @@ function App() {
                     <div />
                   </div>
                 </div>
-                <MostPopular locations={topLocations} />
-                {/* Seccion de categorias */}
+                <MostPopular
+                  key="most-popular"
+                  locations={
+                    venue?.venue.topLocations as MappedinLocation[] | undefined
+                  }
+                />
                 {showCategorySection && (
                   <CategorySection
                     categories={venue.categories}
@@ -285,10 +332,12 @@ function App() {
                     mapView={mapView}
                   />
                 )}
-                {/* Seccion de busqueda */}
                 {showSearchSection && (
                   <SearchSection
-                    searchResults={searchResults}
+                    searchResults={searchResults.filter(
+                      (result): result is MappedinLocation =>
+                        result instanceof MappedinLocation
+                    )}
                     setSearchQuery={setSearchQuery}
                     searchQuery={searchQuery}
                     setSelectedLocation={setSelectedLocation}
@@ -297,7 +346,6 @@ function App() {
                     destination={destination}
                   />
                 )}
-                {/* Contenedor informacion lugar */}
                 {selectedLocation &&
                   !showSearchSection &&
                   !showCategorySection && (
@@ -318,7 +366,7 @@ function App() {
         <MapSelector
           selectedMap={selectedMap}
           handleMapChange={handleMapChange}
-          maps={venue.maps}
+          // maps={venue.maps}
         />
       </div>
     </>

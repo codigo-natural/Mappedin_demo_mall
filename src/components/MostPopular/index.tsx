@@ -3,7 +3,7 @@ import { MappedinLocation } from "@mappedin/mappedin-js";
 import { SvgFire } from "../svg";
 
 interface MostPopularProps {
-  locations: MappedinLocation[] | undefined | string;
+  locations: MappedinLocation[] | undefined;
 }
 
 export const MostPopular: React.FC<MostPopularProps> = ({ locations }) => {
@@ -14,9 +14,9 @@ export const MostPopular: React.FC<MostPopularProps> = ({ locations }) => {
         <SvgFire />
       </div>
       <ul style={{ display: "flex", gap: "16px", listStyle: "none" }}>
-        {locations?.map((location) => (
-          <li key={location} style={{ marginBottom: "1em" }}>
-            {location}
+        {locations?.map((location, index) => (
+          <li key={index} style={{ marginBottom: "1em" }}>
+            {location.name}
           </li>
         ))}
       </ul>

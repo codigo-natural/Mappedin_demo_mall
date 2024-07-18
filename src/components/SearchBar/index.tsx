@@ -1,7 +1,19 @@
+import React from "react";
 import { SvgArrowLeft, SvgCancel, SvgCategory, SvgSearch } from "../svg";
-import styles from './SearchBar.module.css';
+import styles from "./SearchBar.module.css";
 
-export const SearchBar = ({
+interface SearchBarProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  inputFocused: boolean;
+  handleInputFocus: () => void;
+  handleCancelClick: () => void;
+  handleArrowClick: () => void;
+  handleCategoryClick: () => void;
+  showCategorySection: boolean;
+}
+
+export const SearchBar: React.FC<SearchBarProps> = ({
   searchQuery,
   setSearchQuery,
   inputFocused,
@@ -16,15 +28,23 @@ export const SearchBar = ({
       <div className={styles.iconContainer}>
         <div
           role="presentation"
-          className={`${styles.iconPresentation} ${inputFocused || showCategorySection ? styles.hidden : ''}`}
+          className={`${styles.iconPresentation} ${
+            inputFocused || showCategorySection ? styles.hidden : ""
+          }`}
         >
           <SvgSearch />
         </div>
         <div
           role="navigation"
-          className={`${styles.iconPresentation} ${inputFocused || showCategorySection ? '' : styles.hidden}`}
+          className={`${styles.iconPresentation} ${
+            inputFocused || showCategorySection ? "" : styles.hidden
+          }`}
         >
-          <div role="button" className={styles.iconButton} onClick={handleArrowClick}>
+          <div
+            role="button"
+            className={styles.iconButton}
+            onClick={handleArrowClick}
+          >
             <SvgArrowLeft />
           </div>
         </div>
@@ -36,7 +56,7 @@ export const SearchBar = ({
         autoComplete="off"
         autoCorrect="off"
         type="text"
-        spellCheck="false"
+        spellCheck={false}
         className={styles.input}
         onFocus={handleInputFocus}
         value={searchQuery}
@@ -45,17 +65,29 @@ export const SearchBar = ({
       <div className={styles.iconContainer}>
         <div
           role="presentation"
-          className={`${styles.iconPresentation} ${inputFocused ? '' : styles.hidden}`}
+          className={`${styles.iconPresentation} ${
+            inputFocused ? "" : styles.hidden
+          }`}
         >
-          <div role="button" className={styles.iconButton} onClick={handleCancelClick}>
+          <div
+            role="button"
+            className={styles.iconButton}
+            onClick={handleCancelClick}
+          >
             <SvgCancel />
           </div>
         </div>
         <div
           role="navigation"
-          className={`${styles.iconPresentation} ${inputFocused ? styles.hidden : ''}`}
+          className={`${styles.iconPresentation} ${
+            inputFocused ? styles.hidden : ""
+          }`}
         >
-          <div role="button" className={styles.iconButton} onClick={handleCategoryClick}>
+          <div
+            role="button"
+            className={styles.iconButton}
+            onClick={handleCategoryClick}
+          >
             <SvgCategory />
           </div>
         </div>
