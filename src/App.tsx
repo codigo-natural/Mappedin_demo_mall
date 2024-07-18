@@ -1,23 +1,25 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
 import {
-  E_SDK_EVENT,
   CAMERA_EASING_MODE,
-  MappedinPolygon,
+  E_SDK_EVENT,
+  MappedinCategory,
   MappedinLocation,
+  MappedinPolygon,
   STATE,
 } from "@mappedin/mappedin-js";
 import "@mappedin/mappedin-js/lib/mappedin.css";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
+import { CategoryList } from "./components/CategoryList";
+import { LocationInfo } from "./components/LocationInfo";
+import { MapSelector } from "./components/MapSelector";
+// import { MostPopular } from "./components/MostPopular";
+import { SearchBar } from "./components/SearchBar";
+import { SearchSection } from "./components/SearchSection";
+import { options, walkingSpeed } from "./constants";
 import { useMapView } from "./hooks/useMapView";
 import { useOfflineSearch } from "./hooks/useOfflineSearch";
 import { useSelectedLocation } from "./hooks/useSelectedLocation";
 import { useVenue } from "./hooks/useVenue";
-import { MostPopular } from "./components/MostPopular";
-import { SearchBar } from "./components/SearchBar";
-import { SearchSection } from "./components/SearchSection";
-import { MapSelector } from "./components/MapSelector";
-import { LocationInfo } from "./components/LocationInfo";
-import { options, walkingSpeed } from "./constants";
 import { calculateWalkingTime } from "./utils";
 
 interface MapSelector {
@@ -36,8 +38,22 @@ function App() {
   const [showSearchSection, setShowSearchSection] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [totalWalkingTime, setTotalWalkingTime] = useState(0);
+  const [showCategoryList, setShowCategoryList] = useState(false);
+  const [selectedCategory, setSelectedCategory] =
+    useState<MappedinCategory | null>(null);
+  const [categories, setCategories] = useState<MappedinCategory[]>([]);
 
   const venue = useVenue(options);
+
+  useEffect(() => {
+    if (venue) {
+      const sortedCategories = [...venue.categories].sort((a, b) =>
+        a.name && b.name ? (a.name > b.name ? 1 : -1) : 0
+      );
+      setCategories(sortedCategories);
+    }
+  }, [venue]);
+
   const { elementRef, mapView } = useMapView(venue, {
     multiBufferRendering: true,
     xRayPath: true,
@@ -190,10 +206,25 @@ function App() {
   }
 
   const handleCategoryClick = () => {
-    setShowCategorySection(!showCategorySection);
+    setShowCategoryList(true);
+    setShowCategorySection(false);
     setShowSearchSection(false);
-    setInputFocused(false);
-    setSelectedLocation(undefined);
+    setSelectedCategory(null);
+    // setSelectedLocation(undefined);
+    // setInputFocused(false);
+  };
+
+  const handleCategorySelect = (category: MappedinCategory) => {
+    setSelectedCategory(category);
+  };
+
+  const handleLocationSelect = (location: MappedinLocation) => {
+    setSearchQuery(location.name);
+    setShowCategoryList(false);
+  };
+
+  const handleBackToCategories = () => {
+    setSelectedCategory(null);
   };
 
   const handleInputFocus = () => {
@@ -308,12 +339,21 @@ function App() {
                     <div />
                   </div>
                 </div>
-                <MostPopular
+                {showCategoryList && !showSearchSection && (
+                  <CategoryList
+                    categories={categories}
+                    onCategorySelect={handleCategorySelect}
+                    onLocationSelect={handleLocationSelect}
+                    selectedCategory={selectedCategory}
+                    onBackClick={handleBackToCategories}
+                  />
+                )}
+                {/* <MostPopular
                   key="most-popular"
                   locations={
                     venue?.venue.topLocations as MappedinLocation[] | undefined
                   }
-                />
+                /> */}
                 {showSearchSection && (
                   <SearchSection
                     searchResults={searchResults.filter(
