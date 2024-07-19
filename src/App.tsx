@@ -33,7 +33,7 @@ function App() {
   const [destination, setDestination] = useState<MappedinPolygon | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [selectedMap, setSelectedMap] = useState("Planta Baja");
-  const [steps, setSteps] = useState<string[]>([]);
+  const [steps, setSteps] = useState<React.ReactNode[]>([]);
   const [showCategorySection, setShowCategorySection] = useState(false);
   const [showSearchSection, setShowSearchSection] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
@@ -128,10 +128,16 @@ function App() {
         const distanceInMeters = Math.round(step.distance);
         totalDistance += distanceInMeters;
 
-        return `${step.instruction} (${distanceInMeters} meters)`;
+        return (
+          <div>
+            <p>{step.instruction}</p>
+            <span>
+              {distanceInMeters} <small>meters</small>
+            </span>
+          </div>
+        );
       }
     );
-    console.log("new steps", newSteps);
 
     setSteps(newSteps);
     setTotalWalkingTime(
@@ -206,7 +212,7 @@ function App() {
   }
 
   const handleCategoryClick = () => {
-    setShowCategoryList(true);
+    setShowCategoryList(!showCategoryList);
     setShowCategorySection(false);
     setShowSearchSection(false);
     setSelectedCategory(null);
@@ -339,15 +345,17 @@ function App() {
                     <div />
                   </div>
                 </div>
-                {showCategoryList && !showSearchSection && (
-                  <CategoryList
-                    categories={categories}
-                    onCategorySelect={handleCategorySelect}
-                    onLocationSelect={handleLocationSelect}
-                    selectedCategory={selectedCategory}
-                    onBackClick={handleBackToCategories}
-                  />
-                )}
+                {showCategoryList &&
+                  !showSearchSection &&
+                  !selectedLocation && (
+                    <CategoryList
+                      categories={categories}
+                      onCategorySelect={handleCategorySelect}
+                      onLocationSelect={handleLocationSelect}
+                      selectedCategory={selectedCategory}
+                      onBackClick={handleBackToCategories}
+                    />
+                  )}
                 {/* <MostPopular
                   key="most-popular"
                   locations={

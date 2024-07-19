@@ -13,7 +13,7 @@ interface LocationInfoProps {
   showFullDescription: boolean;
   setShowFullDescription: (show: boolean) => void;
   maxLength: number;
-  steps: string[];
+  steps: React.ReactNode[];
   totalWalkingTime: number;
 }
 
@@ -26,7 +26,6 @@ export const LocationInfo: React.FC<LocationInfoProps> = ({
   steps,
   totalWalkingTime,
 }) => {
-  console.log('steps', steps)
   return (
     <div className={styles.containen_location_info}>
       {steps.length < 1 && selectedLocation && (
@@ -54,21 +53,21 @@ export const LocationInfo: React.FC<LocationInfoProps> = ({
         </div>
       )}
       <div className={styles.container_step_by_step}>
-        {steps.length > 0 && <h3>Step by Step</h3>}
+        <h3>Step by Step</h3>
         {steps.map((step, index) => (
-          <p key={index}>{step}</p>
+          <section className={styles.list_steps}>
+            <div key={index}>{step}</div>
+          </section>
         ))}
-        {steps.length > 0 && (
-          <div className={styles.steps_time}>
-            <div className={styles.container_step_by_step}>
-              <p>Time to destination</p>
-              <div>
-                <SvgPerson />
-                <span>{totalWalkingTime} minutes</span>
-              </div>
+        <div className={styles.steps_time}>
+          <div className={styles.container_step_by_step}>
+            <p>Time to destination</p>
+            <div>
+              <SvgPerson />
+              <span>{totalWalkingTime} minutes</span>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
